@@ -1,6 +1,9 @@
 import { FC } from 'react'
-import { Screen } from 'aestetix'
+import { Layout } from 'aestetix'
 
-export const App: FC = () => <Screen />
+export const App: FC = () => <Layout.Screen>
+  <Layout.Scroll>
+  </Layout.Scroll>
+</Layout.Screen>
 
 export default App;
