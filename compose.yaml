@@ -1,0 +1,4 @@
+services:
+  aestetix-dev:
+    build: .
+    image: aestetix-dev
