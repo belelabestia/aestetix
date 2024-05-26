@@ -1,14 +1,14 @@
 import { FC, RefObject, createContext, useContext, useEffect, useRef, useState } from "react";
 import styles from './styles.module.css';
-import { Flex, Grid, IconButton, Slider } from "@radix-ui/themes";
-import { DotsHorizontalIcon, PauseIcon, PlayIcon, TrackNextIcon, TrackPreviousIcon } from "@radix-ui/react-icons";
+import { Code, Flex, Grid, IconButton, Slider } from "@radix-ui/themes";
+import { DotsHorizontalIcon, PauseIcon, PlayIcon } from "@radix-ui/react-icons";
 
 type Context = {
   state: 'idle' | 'playing';
   dragging: boolean;
   trackSrc: string;
   timePercent: number; // 0 - 100,
-  audioRef: RefObject<HTMLAudioElement>;
+  audioRef: RefObject<HTMLAudioElement> | null;
 };
 
 const PlayerContext = createContext<{
@@ -36,7 +36,10 @@ export const Player: FC<{ trackSrc: string }> = props => {
       <Audio />
       <Grid rows="24px 1fr" gap="2">
         <TimeBar />
-        <Buttons />
+        <Flex gap="4" align="center" justify="between">
+          <Buttons />
+          <TimeDisplay />
+        </Flex>
       </Grid>
     </PlayerContext.Provider>
   );
@@ -83,7 +86,7 @@ export const TimeBar: FC = () => {
         value={[context.timePercent]}
         onValueChange={([timePercent]) => update({ timePercent, dragging: true })}
         onValueCommit={([timePercent]) => {
-          const audio = context.audioRef.current;
+          const audio = context.audioRef?.current;
           if (!audio) return;
 
           audio.currentTime = audio.duration * (timePercent / 100);
@@ -137,3 +140,21 @@ export const Buttons: FC = () => {
     </Grid>
   );
 };
+
+export const TimeDisplay: FC = () => {
+  const { context } = useContext(PlayerContext);
+  const audio = context.audioRef?.current;
+
+  if (
+    audio?.currentTime == null ||
+    audio?.duration == null ||
+    isNaN(audio.duration)
+  ) return <Code variant="ghost">--:-- / --:--</Code>;
+
+  return <Code variant="ghost">{timeText(audio.currentTime)} / {timeText(audio.duration)}</Code>;
+};
+
+export const timeText = (seconds: number) =>
+  new Date(seconds * 1000)
+    .toISOString()
+    .slice(14, 19);
