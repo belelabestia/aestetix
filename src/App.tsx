@@ -1,18 +1,17 @@
 import { FC } from 'react'
-import { Layout } from 'aestetix'
-import { Card, Flex, ScrollArea, ThemePanel } from '@radix-ui/themes'
+import * as Radix from '@radix-ui/themes'
+import { Layout, Data } from 'aestetix'
 
-export const App: FC = () => <Layout.Main>
-  <Layout.Screen>
-    <ScrollArea>
-      <Flex height="100%" direction="column" justify="center" align="center">
-        <Card>
-          Hi! Welcome to Aestetix.
-        </Card>
-        <ThemePanel defaultOpen={false} />
-      </Flex>
-    </ScrollArea>
-  </Layout.Screen>
-</Layout.Main>
+export const App: FC = () => (
+  <Radix.Theme panelBackground="translucent">
+    <Layout.Screen>
+      <Radix.Grid rows="1fr 180px">
+        <Radix.Text>Ciaone</Radix.Text>
+        <Data.Audio.Player />
+      </Radix.Grid>
+    </Layout.Screen >
+    <Radix.ThemePanel />
+  </Radix.Theme>
+)
 
 export default App

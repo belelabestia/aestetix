@@ -1,3 +1,3 @@
 export * as Layout from './layout'
-export * from './data'
+export * as Data from './data'
 import '@radix-ui/themes/styles.css'
