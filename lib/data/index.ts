@@ -1,1 +1,2 @@
-export * as Audio from './audio'
+export * as Audio from './audio';
+export { Text } from '@radix-ui/themes';
