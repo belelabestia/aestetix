@@ -13,6 +13,9 @@ module.exports = {
     '@stylistic'
   ],
   rules: {
+    '@stylistic/member-delimiter-style': [
+      "error"
+    ],
     '@stylistic/semi': [
       "error",
       "always",
