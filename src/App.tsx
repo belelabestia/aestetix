@@ -7,7 +7,10 @@ export const App: FC = () => (
       <Layout.Grid rows="1fr auto">
         <Data.Text>Ciaone</Data.Text>
         <Radix.Card>
-          <Data.Audio.Player trackSrc="https://static.belelabestia.it/Night%20in%20Tokyo%2001%20-%20Simpatico.wav" />
+          <Data.Audio.Player
+            trackSrc="https://static.belelabestia.it/Night%20in%20Tokyo%2001%20-%20Simpatico.wav"
+            trackTitle="Doctor Um & Big Ass - Night in Tokyo"
+          />
         </Radix.Card>
       </Layout.Grid>
     </Layout.Screen>

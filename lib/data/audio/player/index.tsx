@@ -1,12 +1,12 @@
-import { FC, RefObject, createContext, useContext, useEffect, useRef, useState } from "react";
-import styles from './styles.module.css';
+import { FC, RefObject, createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { Code, Flex, Grid, IconButton, Slider } from "@radix-ui/themes";
-import { DotsHorizontalIcon, PauseIcon, PlayIcon } from "@radix-ui/react-icons";
+import { DotsHorizontalIcon, PauseIcon, PlayIcon, TrackNextIcon, TrackPreviousIcon } from "@radix-ui/react-icons";
 
 type Context = {
   state: 'idle' | 'playing';
   dragging: boolean;
   trackSrc: string;
+  trackTitle: string;
   timePercent: number; // 0 - 100,
   audioRef: RefObject<HTMLAudioElement> | null;
 };
@@ -16,10 +16,11 @@ const PlayerContext = createContext<{
   update: (patch: Partial<Context>) => void;
 }>(null!);
 
-export const Player: FC<{ trackSrc: string }> = props => {
+export const Player: FC<{ trackSrc: string; trackTitle: string }> = props => {
   const [context, update] = useState<Context>({
     state: 'idle',
     dragging: false,
+    trackTitle: props.trackTitle,
     trackSrc: props.trackSrc,
     timePercent: 0,
     audioRef: null!
@@ -36,10 +37,36 @@ export const Player: FC<{ trackSrc: string }> = props => {
       <Audio />
       <Grid rows="24px 1fr" gap="2">
         <TimeBar />
-        <Flex gap="4" align="center" justify="between">
-          <Buttons />
-          <TimeDisplay />
-        </Flex>
+        <Grid
+          columns={{ initial: '2', sm: '1fr auto 1fr' }}
+          rows={{ initial: 'auto 1fr', sm: '1' }}
+          gap="4"
+        >
+          <Flex
+            gridColumn={{ initial: '1 / 3', sm: '1' }}
+            gridRow="1"
+            align="center"
+            justify={{ initial: 'center', sm: 'start' }}
+            width="100%s"
+          >
+            <Title />
+          </Flex>
+          <Flex
+            gridColumn={{ initial: '1', sm: '2' }}
+            gridRow={{ initial: '2', sm: '1' }}
+            align="center"
+          >
+            <Buttons />
+          </Flex>
+          <Flex
+            gridColumn={{ initial: '2', sm: '3' }}
+            gridRow={{ initial: '2', sm: '1' }}
+            align="center"
+            justify="end"
+          >
+            <TimeDisplay />
+          </Flex>
+        </Grid>
       </Grid>
     </PlayerContext.Provider>
   );
@@ -98,11 +125,16 @@ export const TimeBar: FC = () => {
   );
 };
 
+export const Title: FC = () => {
+  const { context } = useContext(PlayerContext);
+  return <Code variant="ghost">{context.trackTitle}</Code>;
+};
+
 export const Buttons: FC = () => {
   const { context } = useContext(PlayerContext);
   const audio = context.audioRef?.current;
 
-  const toggleAction = () => {
+  const toggleAction = useCallback(() => {
     switch (context.state) {
       case "idle":
         audio?.play();
@@ -111,7 +143,18 @@ export const Buttons: FC = () => {
         audio?.pause();
         return;
     }
-  };
+  }, [context, audio]);
+
+  useEffect(() => {
+    const action = (event: KeyboardEvent) => {
+      if (event.code === 'Space') toggleAction();
+      console.log('heee', event);
+    };
+
+    window.addEventListener('keypress', action);
+    return () => window.removeEventListener('keypress', action);
+  }, [audio, toggleAction]);
+
 
   const ToggleIcon = () => {
     if (!audio) return <DotsHorizontalIcon />;
@@ -125,19 +168,17 @@ export const Buttons: FC = () => {
   };
 
   return (
-    <Grid className={styles.centerItems}>
-      <Flex gap="4">
-        {/* <IconButton radius="full">
-          <TrackPreviousIcon />
-        </IconButton> */}
-        <IconButton radius="full" onClick={toggleAction}>
-          <ToggleIcon />
-        </IconButton>
-        {/* <IconButton radius="full">
-          <TrackNextIcon />
-        </IconButton> */}
-      </Flex>
-    </Grid>
+    <Flex gap="2" align="center">
+      <IconButton radius="full" disabled>
+        <TrackPreviousIcon />
+      </IconButton>
+      <IconButton radius="full" onClick={toggleAction} size="3">
+        <ToggleIcon />
+      </IconButton>
+      <IconButton radius="full" disabled>
+        <TrackNextIcon />
+      </IconButton>
+    </Flex>
   );
 };
 
@@ -154,7 +195,7 @@ export const TimeDisplay: FC = () => {
   return <Code variant="ghost">{timeText(audio.currentTime)} / {timeText(audio.duration)}</Code>;
 };
 
-export const timeText = (seconds: number) =>
+const timeText = (seconds: number) =>
   new Date(seconds * 1000)
     .toISOString()
     .slice(14, 19);
