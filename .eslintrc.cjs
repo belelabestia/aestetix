@@ -13,6 +13,14 @@ module.exports = {
     '@stylistic'
   ],
   rules: {
+    '@stylistic/object-curly-spacing': [
+      "error",
+      "always"
+    ],
+    '@stylistic/block-spacing': [
+      "error",
+      "always"
+    ],
     '@stylistic/member-delimiter-style': [
       "error"
     ],
