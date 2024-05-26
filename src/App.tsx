@@ -4,12 +4,14 @@ import { Layout, Data, Radix } from 'aestetix';
 export const App: FC = () => (
   <Layout.Theme panelBackground="translucent">
     <Layout.Screen>
-      <Layout.Grid rows="1fr 180px">
+      <Layout.Grid rows="1fr auto">
         <Data.Text>Ciaone</Data.Text>
-        <Data.Audio.Player />
+        <Radix.Card>
+          <Data.Audio.Player trackSrc="https://static.belelabestia.it/Night%20in%20Tokyo%2001%20-%20Simpatico.wav" />
+        </Radix.Card>
       </Layout.Grid>
     </Layout.Screen>
-    <Radix.ThemePanel />
+    {/* <Radix.ThemePanel /> */}
   </Layout.Theme>
 );
 

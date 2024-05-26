@@ -1,60 +1,139 @@
-import { FC, ReactEventHandler, RefObject, forwardRef, useRef, useState } from "react";
+import { FC, RefObject, createContext, useContext, useEffect, useRef, useState } from "react";
 import styles from './styles.module.css';
-import { Button, Flex, Grid, Slider } from "@radix-ui/themes";
+import { Flex, Grid, IconButton, Slider } from "@radix-ui/themes";
+import { DotsHorizontalIcon, PauseIcon, PlayIcon, TrackNextIcon, TrackPreviousIcon } from "@radix-ui/react-icons";
 
-export const Player: FC = () => {
-  const audioRef = useRef<HTMLAudioElement>(null);
-  const [state, setState] = useState({ time: 0 });
+type Context = {
+  state: 'idle' | 'playing';
+  dragging: boolean;
+  trackSrc: string;
+  timePercent: number; // 0 - 100,
+  audioRef: RefObject<HTMLAudioElement>;
+};
+
+const PlayerContext = createContext<{
+  context: Context;
+  update: (patch: Partial<Context>) => void;
+}>(null!);
+
+export const Player: FC<{ trackSrc: string }> = props => {
+  const [context, update] = useState<Context>({
+    state: 'idle',
+    dragging: false,
+    trackSrc: props.trackSrc,
+    timePercent: 0,
+    audioRef: null!
+  });
 
   return (
-    <Grid rows="24px 1fr" className={styles.player}>
-      <Audio ref={audioRef} onTimeUpdate={() => setState({
-        time: getTime(audioRef.current)
-      })} />
-      <TimeBar time={state.time} onTimeChange={([time]) => {
-        setState({ time });
+    <PlayerContext.Provider value={{
+      context,
+      update: patch => update({
+        ...context,
+        ...patch
+      })
+    }}>
+      <Audio />
+      <Grid rows="24px 1fr" gap="2">
+        <TimeBar />
+        <Buttons />
+      </Grid>
+    </PlayerContext.Provider>
+  );
+};
 
-        if (audioRef.current == null) return;
+export const Audio: FC = () => {
+  const ref = useRef<HTMLAudioElement>(null);
+  const { context, update } = useContext(PlayerContext);
 
-        audioRef.current.currentTime = (audioRef.current?.duration ?? 0) * (time / 100);
-      }} />
-      <Buttons audioRef={audioRef} />
+  useEffect(() => update({ audioRef: ref }), []);
+
+  return (
+    <audio
+      ref={ref}
+      controlsList="nodownload"
+      src={context.trackSrc}
+      onPlay={() => update({ state: 'playing' })}
+      onPause={() => update({ state: 'idle' })}
+      onEnded={() => {
+        const audio = ref.current;
+        if (!audio) return;
+
+        audio.currentTime = 0;
+      }}
+      onTimeUpdate={() => {
+        if (context.dragging) return;
+
+        const audio = ref.current;
+        if (!audio) return;
+
+        update({ timePercent: 100 * audio.currentTime / audio.duration });
+      }}
+    />
+  );
+};
+
+export const TimeBar: FC = () => {
+  const { context, update } = useContext(PlayerContext);
+
+  return (
+    <Grid align="center">
+      <Slider
+        step={0.1}
+        value={[context.timePercent]}
+        onValueChange={([timePercent]) => update({ timePercent, dragging: true })}
+        onValueCommit={([timePercent]) => {
+          const audio = context.audioRef.current;
+          if (!audio) return;
+
+          audio.currentTime = audio.duration * (timePercent / 100);
+
+          update({ timePercent, dragging: false });
+        }}
+      />
     </Grid>
   );
 };
 
-const getTime = (audio: HTMLAudioElement | null): number => {
-  if (audio?.currentTime == null || audio?.duration == null) return 0;
-  return 100 * audio.currentTime / audio.duration;
+export const Buttons: FC = () => {
+  const { context } = useContext(PlayerContext);
+  const audio = context.audioRef?.current;
+
+  const toggleAction = () => {
+    switch (context.state) {
+      case "idle":
+        audio?.play();
+        return;
+      case "playing":
+        audio?.pause();
+        return;
+    }
+  };
+
+  const ToggleIcon = () => {
+    if (!audio) return <DotsHorizontalIcon />;
+
+    switch (context.state) {
+      case "idle":
+        return <PlayIcon />;
+      case "playing":
+        return <PauseIcon />;
+    }
+  };
+
+  return (
+    <Grid className={styles.centerItems}>
+      <Flex gap="4">
+        {/* <IconButton radius="full">
+          <TrackPreviousIcon />
+        </IconButton> */}
+        <IconButton radius="full" onClick={toggleAction}>
+          <ToggleIcon />
+        </IconButton>
+        {/* <IconButton radius="full">
+          <TrackNextIcon />
+        </IconButton> */}
+      </Flex>
+    </Grid>
+  );
 };
-
-export const Audio = forwardRef<
-  HTMLAudioElement,
-  { onTimeUpdate: ReactEventHandler<HTMLAudioElement> }
->((props, ref) => (
-  <audio
-    ref={ref}
-    controlsList="nodownload"
-    src="https://static.belelabestia.it/Night%20in%20Tokyo%2001%20-%20Simpatico.wav"
-    onTimeUpdate={props.onTimeUpdate}
-  />
-));
-
-export const TimeBar: FC<{
-  time: number,
-  onTimeChange: (value: number[]) => void
-}> = props => (
-  <Grid align="center">
-    <Slider value={[props.time]} onValueChange={props.onTimeChange} />
-  </Grid>
-);
-
-export const Buttons: FC<{ audioRef: RefObject<HTMLAudioElement> }> = props => (
-  <Grid className={styles.centerItems}>
-    <Flex gap="4" m="">
-      <Button radius="full" onClick={() => props.audioRef.current?.play()}>{'<-'}</Button>
-      <Button radius="full" onClick={() => props.audioRef.current?.pause()}>{'|> / ||'}</Button>
-      <Button radius="full">{'->'}</Button>
-    </Flex>
-  </Grid>
-);
