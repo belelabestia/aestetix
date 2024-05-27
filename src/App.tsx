@@ -8,8 +8,8 @@ export const App: FC = () => (
         <Data.Text>Ciaone</Data.Text>
         <Radix.Card>
           <Data.Audio.Player
-            trackSrc="https://static.belelabestia.it/Night%20in%20Tokyo%2001%20-%20Simpatico.wav"
-            trackTitle="Doctor Um & Big Ass - Night in Tokyo"
+            source="https://static.belelabestia.it/Night%20in%20Tokyo%2001%20-%20Simpatico.wav"
+            title="Doctor Um & Big Ass - Night in Tokyo"
           />
         </Radix.Card>
       </Layout.Grid>

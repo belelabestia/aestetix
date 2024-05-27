@@ -11,29 +11,30 @@ type Context = {
   audioRef: RefObject<HTMLAudioElement> | null;
 };
 
+type UpdateContext = (patch: Partial<Context>) => void;
+
 const PlayerContext = createContext<{
   context: Context;
-  update: (patch: Partial<Context>) => void;
+  update: UpdateContext;
 }>(null!);
 
-export const Player: FC<{ trackSrc: string; trackTitle: string }> = props => {
-  const [context, update] = useState<Context>({
+export const Player: FC<{ source: string; title: string }> = props => {
+  const [context, setContext] = useState<Context>({
     state: 'idle',
     dragging: false,
-    trackTitle: props.trackTitle,
-    trackSrc: props.trackSrc,
+    trackTitle: props.title,
+    trackSrc: props.source,
     timePercent: 0,
     audioRef: null!
   });
 
+  const update = useCallback<UpdateContext>(patch => setContext({
+    ...context,
+    ...patch
+  }), [context]);
+
   return (
-    <PlayerContext.Provider value={{
-      context,
-      update: patch => update({
-        ...context,
-        ...patch
-      })
-    }}>
+    <PlayerContext.Provider value={{ context, update }}>
       <Audio />
       <Grid rows="24px 1fr" gap="2">
         <TimeBar />
@@ -72,11 +73,11 @@ export const Player: FC<{ trackSrc: string; trackTitle: string }> = props => {
   );
 };
 
-export const Audio: FC = () => {
+export const Audio = () => {
   const ref = useRef<HTMLAudioElement>(null);
   const { context, update } = useContext(PlayerContext);
 
-  useEffect(() => update({ audioRef: ref }), []);
+  useEffect(() => update({ audioRef: ref }), [update]);
 
   return (
     <audio
@@ -146,13 +147,15 @@ export const Buttons: FC = () => {
   }, [context, audio]);
 
   useEffect(() => {
-    const action = (event: KeyboardEvent) => {
-      if (event.code === 'Space') toggleAction();
-      console.log('heee', event);
+    const onSpaceBar = (event: KeyboardEvent) => {
+      if (event.code !== 'Space') return;
+      
+      event.preventDefault();
+      toggleAction();
     };
 
-    window.addEventListener('keypress', action);
-    return () => window.removeEventListener('keypress', action);
+    window.addEventListener('keydown', onSpaceBar);
+    return () => window.removeEventListener('keydown', onSpaceBar);
   }, [audio, toggleAction]);
 
 
